@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quizmaker - Ko'p fanlik</title>
+<style>
+  :root{
+    --bg:#11151c;
+    --panel:#1a212c;
+    --line:#2a3442;
+    --text:#e8edf4;
+    --muted:#8a97a8;
+    --accent:#5ee6c1;
+    --accent2:#f4b860;
+    --bad:#ef6f6c;
+    --good:#5ee6c1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Georgia', 'Times New Roman', serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+  }
+  .wrap{width:100%;max-width:720px;}
+  h1{
+    font-family:'Trebuchet MS', sans-serif;
+    font-weight:700;
+    letter-spacing:0.04em;
+    font-size:28px;
+    margin:0 0 4px;
+  }
+  .eyebrow{
+    font-family:'Courier New', monospace;
+    color:var(--accent);
+    font-size:13px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .sub{color:var(--muted);font-size:15px;margin-bottom:28px;}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:24px;
+    margin-bottom:18px;
+  }
+  label{display:block;font-size:14px;color:var(--muted);margin-bottom:8px;font-family:'Trebuchet MS', sans-serif;}
+  input[type=file]{
+    width:100%;
+    padding:10px;
+    background:#0e1319;
+    border:1px dashed var(--line);
+    border-radius:8px;
+    color:var(--text);
+    font-family:'Courier New', monospace;
+    font-size:13px;
+  }
+  input[type=text]{
+    width:100%;
+    padding:10px;
+    background:#0e1319;
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--text);
+    font-size:15px;
+    font-family:'Trebuchet MS', sans-serif;
+  }
+  textarea{
+    width:100%;
+    min-height:100px;
+    background:#0e1319;
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--text);
+    font-family:'Courier New', monospace;
+    font-size:13px;
+    padding:12px;
+    resize:vertical;
+  }
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:14px;}
+  .field{flex:1;min-width:140px;}
+  select, input[type=number]{
+    width:100%;
+    padding:10px;
+    background:#0e1319;
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--text);
+    font-size:15px;
+    font-family:'Trebuchet MS', sans-serif;
+  }
+  button{
+    font-family:'Trebuchet MS', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.03em;
+    padding:12px 22px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.98);}
+  .btn-primary{background:var(--accent);color:#0e1319;}
+  .btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--line);}
+  .status{font-size:13px;color:var(--muted);margin-top:10px;font-family:'Courier New', monospace;}
+  .status.ok{color:var(--good);}
+  .status.err{color:var(--bad);}
+  .hidden{display:none !important;}
+
+  .subject-card{border-left:3px solid var(--line);}
+  .subject-card.loaded{border-left-color:var(--accent);}
+  .subject-title{
+    font-family:'Trebuchet MS', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:12px;
+    color:var(--accent2);
+  }
+
+  /* Progress / Quiz */
+  .progress-bar{
+    height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:24px;
+  }
+  .progress-fill{height:100%;background:var(--accent);transition:width .25s ease;}
+  .qmeta{font-family:'Courier New', monospace;color:var(--accent2);font-size:13px;letter-spacing:0.1em;margin-bottom:10px;}
+  .qtext{font-size:20px;line-height:1.5;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{
+    text-align:left;
+    background:#0e1319;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    color:var(--text);
+    font-size:15px;
+    font-family:'Georgia', serif;
+    cursor:pointer;
+    display:flex;
+    gap:12px;
+  }
+  .opt:hover{border-color:var(--accent);}
+  .opt .letter{
+    font-family:'Courier New', monospace;
+    color:var(--muted);
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .opt.correct{border-color:var(--good);background:rgba(94,230,193,0.08);}
+  .opt.wrong{border-color:var(--bad);background:rgba(239,111,108,0.08);}
+  .opt.disabled{cursor:default;}
+  .nav-row{display:flex;justify-content:flex-end;margin-top:24px;}
+
+  /* Results */
+  .score-big{font-size:56px;font-weight:700;font-family:'Trebuchet MS', sans-serif;color:var(--accent);}
+  .score-label{color:var(--muted);font-size:15px;margin-bottom:24px;}
+  .subject-score{
+    display:flex;justify-content:space-between;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;
+  }
+  .subject-score:last-child{border-bottom:none;}
+  .review-item{padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{margin-bottom:6px;}
+  .review-subject{
+    font-family:'Courier New', monospace;
+    color:var(--muted);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:4px;
+  }
+  .review-ans{font-family:'Courier New', monospace;font-size:12px;}
+  .tag-correct{color:var(--good);}
+  .tag-wrong{color:var(--bad);}
+
+  ::placeholder{color:#566174;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- SETUP SCREEN -->
+  <div id="setup">
+    <div class="eyebrow">Quizmaker · Ko'p fanlik</div>
+    <h1>Imtihonga tayyorlanish quizi</h1>
+    <div class="sub">Har bir fan uchun test bazasini yuklang, qancha fandan va har fandan nechta savol bo'lishini tanlang.</div>
+
+    <div class="card">
+      <label>Nechta fandan quiz tuzilsin?</label>
+      <select id="subjectCountSelect">
+        <option value="1">1 fan</option>
+        <option value="2">2 fan</option>
+        <option value="3">3 fan</option>
+        <option value="4" selected>4 fan</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <label>Savollar berilish tartibi</label>
+      <select id="orderModeSelect">
+        <option value="mixed" selected>Aralashtirib (barcha fanlar bir-biriga aralash)</option>
+        <option value="bysubject">Fan bo'yicha (1-fan tugagach 2-fan boshlanadi)</option>
+      </select>
+    </div>
+
+    <div id="subjectsWrap"></div>
+
+    <div class="card">
+      <button class="btn-primary" id="startBtn" disabled style="width:100%;">Quizni boshlash</button>
+      <div class="status" id="poolStatus">Fanlar uchun fayl yuklang.</div>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz" class="hidden">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="qmeta" id="qMeta"></div>
+    <div class="card">
+      <div class="qtext" id="qText"></div>
+      <div class="options" id="optionsWrap"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-primary" id="nextBtn" disabled>Keyingisi</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results" class="hidden">
+    <div class="eyebrow">Natija</div>
+    <div class="score-big" id="scoreBig"></div>
+    <div class="score-label" id="scoreLabel"></div>
+    <div class="card" id="subjectScoresWrap"></div>
+    <div class="card" id="reviewWrap"></div>
+    <div class="row">
+      <button class="btn-secondary" id="restartBtn">Qayta boshlash</button>
+      <button class="btn-primary" id="newQuizBtn">Yangi quiz</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MAX_SUBJECTS = 4;
+const subjectData = []; // {name, pool: [...]}
+
+const subjectCountSelect = document.getElementById('subjectCountSelect');
+const subjectsWrap = document.getElementById('subjectsWrap');
+const startBtn = document.getElementById('startBtn');
+const poolStatus = document.getElementById('poolStatus');
+
+let quizQuestions = [];
+let currentIndex = 0;
+let userAnswers = [];
+
+function renderSubjectCards(){
+  const n = parseInt(subjectCountSelect.value);
+  subjectsWrap.innerHTML = '';
+  for(let i = 0; i < n; i++){
+    if(!subjectData[i]) subjectData[i] = { name: '', pool: [] };
+    const card = document.createElement('div');
+    card.className = 'card subject-card';
+    card.id = `subjectCard${i}`;
+    card.innerHTML = `
+      <div class="subject-title">FAN ${i+1}</div>
+      <div class="row" style="margin-top:0;">
+        <div class="field">
+          <label>Fan nomi</label>
+          <input type="text" id="subjectName${i}" placeholder="Masalan: Matematika" value="${subjectData[i].name}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Test bazasi (.csv yoki .json)</label>
+          <input type="file" id="subjectFile${i}" accept=".csv,.json,.txt">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Yoki CSV matnini joylashtiring</label>
+          <textarea id="subjectPaste${i}" placeholder="Savol,Variant A,Variant B,Variant C,Variant D,To'g'ri javob"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Shu fandan nechta savol?</label>
+          <select id="subjectQCount${i}">
+            <option value="10">10 ta</option>
+            <option value="15">15 ta</option>
+            <option value="20" selected>20 ta</option>
+            <option value="25">25 ta</option>
+            <option value="30">30 ta</option>
+            <option value="40">40 ta</option>
+            <option value="50">50 ta</option>
+            <option value="all">Hammasi</option>
+            <option value="custom">Boshqa son...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="customQWrap${i}">
+          <label>Son kiriting</label>
+          <input type="number" id="customQCount${i}" min="1" value="20">
+        </div>
+      </div>
+      <div class="status" id="subjectStatus${i}">Hozircha 0 ta savol yuklandi.</div>
+    `;
+    subjectsWrap.appendChild(card);
+
+    const fileInput = document.getElementById(`subjectFile${i}`);
+    const pasteArea = document.getElementById(`subjectPaste${i}`);
+    const statusEl = document.getElementById(`subjectStatus${i}`);
+    const qCountSelect = document.getElementById(`subjectQCount${i}`);
+    const customWrap = document.getElementById(`customQWrap${i}`);
+
+    qCountSelect.addEventListener('change', () => {
+      customWrap.classList.toggle('hidden', qCountSelect.value !== 'custom');
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        let parsed;
+        if(file.name.toLowerCase().endsWith('.json')){
+          parsed = parseJSON(text);
+        } else {
+          parsed = parseCSV(text);
+        }
+        if(parsed.length === 0){
+          statusEl.textContent = 'Fayldan savol topilmadi. Formatni tekshiring.';
+          statusEl.className = 'status err';
+          return;
+        }
+        subjectData[i].pool = parsed;
+        statusEl.textContent = `${parsed.length} ta savol yuklandi: ${file.name}`;
+        statusEl.className = 'status ok';
+        card.classList.add('loaded');
+        pasteArea.value = '';
+        checkReady();
+      } catch(err){
+        statusEl.textContent = 'Xato: ' + err.message;
+        statusEl.className = 'status err';
+      }
+    });
+
+    pasteArea.addEventListener('input', () => {
+      const text = pasteArea.value.trim();
+      if(!text){ return; }
+      try{
+        let parsed;
+        const trimmed = text.trim();
+        if(trimmed.startsWith('[') || trimmed.startsWith('{')){
+          parsed = parseJSON(text);
+        } else {
+          parsed = parseCSV(text);
+        }
+        if(parsed.length === 0){
+          statusEl.textContent = 'Hech qanday savol aniqlanmadi.';
+          statusEl.className = 'status err';
+          return;
+        }
+        subjectData[i].pool = parsed;
+        statusEl.textContent = `${parsed.length} ta savol aniqlandi.`;
+        statusEl.className = 'status ok';
+        card.classList.add('loaded');
+        fileInput.value = '';
+        checkReady();
+      } catch(err){
+        statusEl.textContent = 'Xato: ' + err.message;
+        statusEl.className = 'status err';
+      }
+    });
+
+    document.getElementById(`subjectName${i}`).addEventListener('input', (e) => {
+      subjectData[i].name = e.target.value;
+    });
+  }
+  // trim subjectData if reduced
+  subjectData.length = n;
+  checkReady();
+}
+
+function checkReady(){
+  const n = parseInt(subjectCountSelect.value);
+  let allLoaded = true;
+  let total = 0;
+  for(let i = 0; i < n; i++){
+    if(!subjectData[i] || subjectData[i].pool.length === 0){
+      allLoaded = false;
+    } else {
+      total += subjectData[i].pool.length;
+    }
+  }
+  startBtn.disabled = !allLoaded;
+  poolStatus.textContent = allLoaded
+    ? `Barcha ${n} fan yuklandi. Jami ${total} ta savol mavjud.`
+    : `Hali yuklanmagan fanlar bor — har bir fan uchun fayl yuklang yoki matn joylashtiring.`;
+}
+
+subjectCountSelect.addEventListener('change', renderSubjectCards);
+renderSubjectCards();
+
+// ---- Parsing ----
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if(lines.length === 0) return [];
+  let startIdx = 0;
+  const first = lines[0].toLowerCase();
+  if(first.includes('savol') || first.includes('question')) startIdx = 1;
+
+  const out = [];
+  for(let i = startIdx; i < lines.length; i++){
+    const cols = splitCSVLine(lines[i]);
+    if(cols.length < 5) continue;
+    const [q, a, b, c, d] = cols;
+    if(!q || !q.trim()) continue;
+    // D ustuni har doim to'g'ri javob matni
+    out.push(buildQuestion(q, [a,b,c,d], 'D'));
+  }
+  return out;
+}
+
+function splitCSVLine(line){
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(ch === ',' && !inQuotes){
+      result.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parseJSON(text){
+  const data = JSON.parse(text);
+  const arr = Array.isArray(data) ? data : (data.questions || []);
+  const out = [];
+  for(const item of arr){
+    let q, opts, correct;
+    if(Array.isArray(item.options)){
+      q = item.question || item.savol || item.q;
+      opts = item.options;
+      correct = item.correct ?? item.answer ?? item.correctAnswer;
+    } else {
+      q = item.question || item.savol || item.q;
+      opts = [item.a ?? item.A ?? item.option1, item.b ?? item.B ?? item.option2, item.c ?? item.C ?? item.option3, item.d ?? item.D ?? item.option4];
+      correct = item.correct ?? item.answer ?? item.correctAnswer;
+    }
+    if(!q || opts.some(o => o === undefined || o === null)) continue;
+    out.push(buildQuestion(q, opts, correct));
+  }
+  return out;
+}
+
+function buildQuestion(q, opts, correctRaw){
+  let correctIndex = -1;
+  const letters = ['A','B','C','D','E','F'];
+  const raw = String(correctRaw).trim();
+
+  if(letters.includes(raw.toUpperCase()) && raw.length === 1){
+    correctIndex = letters.indexOf(raw.toUpperCase());
+  } else if(!isNaN(parseInt(raw)) && parseInt(raw) >= 0 && parseInt(raw) < opts.length){
+    const n = parseInt(raw);
+    correctIndex = (n >= 1 && n <= opts.length) ? n - 1 : n;
+  } else {
+    correctIndex = opts.findIndex(o => String(o).trim().toLowerCase() === raw.toLowerCase());
+  }
+
+  if(correctIndex < 0 || correctIndex >= opts.length) correctIndex = 0;
+
+  return {
+    question: String(q).trim(),
+    options: opts.map(o => String(o).trim()),
+    correctIndex
+  };
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ---- Start quiz ----
+startBtn.addEventListener('click', () => {
+  const n = parseInt(subjectCountSelect.value);
+  let combined = [];
+
+  for(let i = 0; i < n; i++){
+    const sd = subjectData[i];
+    const qCountSelect = document.getElementById(`subjectQCount${i}`);
+    const customInput = document.getElementById(`customQCount${i}`);
+    let count;
+    if(qCountSelect.value === 'all'){
+      count = sd.pool.length;
+    } else if(qCountSelect.value === 'custom'){
+      count = parseInt(customInput.value) || sd.pool.length;
+    } else {
+      count = parseInt(qCountSelect.value);
+    }
+    count = Math.min(count, sd.pool.length);
+
+    const subjName = sd.name.trim() || `Fan ${i+1}`;
+    const picked = shuffle(sd.pool).slice(0, count).map(q => ({
+      subject: subjName,
+      question: q.question,
+      correctText: q.options[q.correctIndex],
+      options: shuffle(q.options)
+    }));
+    combined = combined.concat(picked);
+  }
+
+  quizQuestions = (document.getElementById('orderModeSelect').value === 'mixed')
+    ? shuffle(combined)
+    : combined; // already grouped by subject in original order
+  currentIndex = 0;
+  userAnswers = [];
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  showQuestion();
+});
+
+const qMeta = document.getElementById('qMeta');
+const qText = document.getElementById('qText');
+const optionsWrap = document.getElementById('optionsWrap');
+const nextBtn = document.getElementById('nextBtn');
+const progressFill = document.getElementById('progressFill');
+
+function showQuestion(){
+  const q = quizQuestions[currentIndex];
+  qMeta.textContent = `${q.subject.toUpperCase()} · SAVOL ${currentIndex + 1} / ${quizQuestions.length}`;
+  qText.textContent = q.question;
+  progressFill.style.width = `${(currentIndex / quizQuestions.length) * 100}%`;
+  optionsWrap.innerHTML = '';
+  nextBtn.disabled = true;
+  nextBtn.textContent = currentIndex === quizQuestions.length - 1 ? "Yakunlash" : "Keyingisi";
+
+  const letters = ['A','B','C','D','E','F'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="letter">${letters[i]}</span><span>${escapeHtml(opt)}</span>`;
+    btn.addEventListener('click', () => selectOption(i, btn));
+    optionsWrap.appendChild(btn);
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function selectOption(i, btnEl){
+  const q = quizQuestions[currentIndex];
+  const isCorrect = q.options[i] === q.correctText;
+  userAnswers[currentIndex] = { selected: q.options[i], correct: isCorrect };
+
+  [...optionsWrap.children].forEach((el, idx) => {
+    el.classList.add('disabled');
+    el.onclick = null;
+    if(q.options[idx] === q.correctText) el.classList.add('correct');
+    else if(idx === i) el.classList.add('wrong');
+  });
+
+  nextBtn.disabled = false;
+}
+
+nextBtn.addEventListener('click', () => {
+  if(currentIndex < quizQuestions.length - 1){
+    currentIndex++;
+    showQuestion();
+  } else {
+    showResults();
+  }
+});
+
+function showResults(){
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('results').classList.remove('hidden');
+
+  const correctCount = userAnswers.filter(a => a && a.correct).length;
+  const total = quizQuestions.length;
+  document.getElementById('scoreBig').textContent = `${correctCount} / ${total}`;
+  document.getElementById('scoreLabel').textContent = `Umumiy natija: ${Math.round((correctCount/total)*100)}%`;
+
+  // Per-subject scores
+  const subjStats = {};
+  quizQuestions.forEach((q, i) => {
+    if(!subjStats[q.subject]) subjStats[q.subject] = { correct: 0, total: 0 };
+    subjStats[q.subject].total++;
+    if(userAnswers[i] && userAnswers[i].correct) subjStats[q.subject].correct++;
+  });
+
+  const subjectScoresWrap = document.getElementById('subjectScoresWrap');
+  subjectScoresWrap.innerHTML = '';
+  Object.keys(subjStats).forEach(subj => {
+    const s = subjStats[subj];
+    const div = document.createElement('div');
+    div.className = 'subject-score';
+    div.innerHTML = `<span>${escapeHtml(subj)}</span><span>${s.correct} / ${s.total} (${Math.round((s.correct/s.total)*100)}%)</span>`;
+    subjectScoresWrap.appendChild(div);
+  });
+
+  const reviewWrap = document.getElementById('reviewWrap');
+  reviewWrap.innerHTML = '';
+  quizQuestions.forEach((q, i) => {
+    const ans = userAnswers[i];
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="review-subject">${escapeHtml(q.subject)}</div>
+      <div class="review-q">${i+1}. ${escapeHtml(q.question)}</div>
+      <div class="review-ans ${ans.correct ? 'tag-correct' : 'tag-wrong'}">
+        ${ans.correct ? "✓ To'g'ri: " + escapeHtml(ans.selected) : "✗ Sizning javob: " + escapeHtml(ans.selected) + " | To'g'ri: " + escapeHtml(q.correctText)}
+      </div>
+    `;
+    reviewWrap.appendChild(div);
+  });
+}
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  currentIndex = 0;
+  userAnswers = [];
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  quizQuestions = quizQuestions.map(q => ({
+    subject: q.subject,
+    question: q.question,
+    correctText: q.correctText,
+    options: shuffle(q.options)
+  }));
+  if(document.getElementById('orderModeSelect').value === 'mixed'){
+    quizQuestions = shuffle(quizQuestions);
+  }
+  showQuestion();
+});
+
+document.getElementById('newQuizBtn').addEventListener('click', () => {
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+});
+</script>
+</body>
+</html>
